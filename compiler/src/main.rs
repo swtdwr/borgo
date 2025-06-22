@@ -284,7 +284,12 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
         cmd.env("GOARCH", goarch);
     }
 
-    cmd.env("CGO_ENABLED", "1");
+    match &config.build_mode {
+        BuildMode::Library => {
+            cmd.env("CGO_ENABLED", "1");
+        }
+        BuildMode::Executable => {}
+    }
 
     // Configure build command
     cmd.arg("build");
