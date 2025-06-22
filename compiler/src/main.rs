@@ -51,17 +51,24 @@ impl TargetPlatform {
 }
 
 #[derive(Debug, Clone)]
-enum ContentType {
-    Executable,
-    Library,
+enum BuildMode {
+    Executable,     // default - regular executable
+    Library,        // c-shared - C shared library
 }
 
-impl ContentType {
+impl BuildMode {
     fn from_str(s: &str) -> Result<Self, String> {
         match s.to_lowercase().as_str() {
-            "exe" | "executable" | "bin" | "binary" => Ok(ContentType::Executable),
-            "lib" | "library" => Ok(ContentType::Library),
-            _ => Err(format!("Unknown content type: {} (use 'exe' or 'lib')", s)),
+            "bin" => Ok(BuildMode::Executable),
+            "lib" => Ok(BuildMode::Library),
+            _ => Err(format!("Unknown build mode: {} (use 'bin' or 'lib')", s)),
+        }
+    }
+
+    fn go_buildmode(&self) -> Option<&'static str> {
+        match self {
+            BuildMode::Executable => None, // default mode
+            BuildMode::Library => Some("c-shared"),
         }
     }
 }
@@ -95,18 +102,18 @@ impl OptimizationLevel {
 #[derive(Debug)]
 struct BuildConfig {
     target_platform: Option<TargetPlatform>,
-    content_type: ContentType,
+    build_mode: BuildMode,
     optimization_level: OptimizationLevel,
-    output_name: Option<String>
+    output_name: Option<String>,
 }
 
 impl Default for BuildConfig {
     fn default() -> Self {
         BuildConfig {
             target_platform: None,
-            content_type: ContentType::Executable,
+            build_mode: BuildMode::Executable,
             optimization_level: OptimizationLevel::Basic,
-            output_name: None
+            output_name: None,
         }
     }
 }
@@ -116,7 +123,7 @@ fn build_project_from_path<P: AsRef<Path>>(project_path: P, config: &BuildConfig
 
     println!("Building project from: {}", project_path.display());
     println!("Target platform: {:?}", config.target_platform);
-    println!("Content type: {:?}", config.content_type);
+    println!("Build mode: {:?}", config.build_mode);
     println!("Optimization level: {:?}", config.optimization_level);
 
     let filesystem = Box::new(fs::LocalFS::new(project_path.to_str().unwrap()));
@@ -167,7 +174,7 @@ fn build_single_file<P: AsRef<Path>>(file_path: P, config: &BuildConfig) -> Resu
 
     println!("Building file: {}", file_path.display());
     println!("Target platform: {:?}", config.target_platform);
-    println!("Content type: {:?}", config.content_type);
+    println!("Build mode: {:?}", config.build_mode);
     println!("Optimization level: {:?}", config.optimization_level);
 
     let source = std::fs::read_to_string(file_path)?;
@@ -224,7 +231,38 @@ fn emit_files(files: &[EmittedFile]) {
     }
 }
 
+fn cleanup_generated_files(files: &[EmittedFile]) {
+    for file in files {
+        if file.name.ends_with(".go") {
+            if let Err(e) = std::fs::remove_file(&file.name) {
+                eprintln!("Warning: Failed to remove generated file {}: {}", file.name, e);
+            } else {
+                println!("Cleaned up: {}", file.name);
+            }
+        }
+    }
+}
+
+fn ensure_build_directory(working_dir: &Path) -> Result<std::path::PathBuf, std::io::Error> {
+    let build_dir = working_dir.join("build");
+    if !build_dir.exists() {
+        std::fs::create_dir_all(&build_dir)?;
+        println!("Created build directory: {}", build_dir.display());
+    }
+    Ok(build_dir)
+}
+
 fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_dir: &Path) {
+    // Create build directory
+    let build_dir = match ensure_build_directory(working_dir) {
+        Ok(dir) => dir,
+        Err(e) => {
+            eprintln!("Failed to create build directory: {}", e);
+            cleanup_generated_files(files);
+            return;
+        }
+    };
+
     // Find main file or use the first one
     let main_file = files
         .iter()
@@ -233,6 +271,7 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
 
     let Some(main_file) = main_file else {
         eprintln!("No source files to compile");
+        cleanup_generated_files(files);
         return;
     };
 
@@ -245,63 +284,31 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
         cmd.env("GOARCH", goarch);
     }
 
-    // Determine build command based on content type
-    match config.content_type {
-        ContentType::Executable => {
-            cmd.arg("build");
+    cmd.env("CGO_ENABLED", "1");
 
-            // Add optimization flags
-            let opt_flags = config.optimization_level.go_flags();
-            for flag in opt_flags {
-                cmd.arg(flag);
-            }
+    // Configure build command
+    cmd.arg("build");
 
-            // Set output name
-            if let Some(output_name) = &config.output_name {
-                cmd.arg("-o").arg(output_name);
-            } else {
-                // Generate default output name based on platform
-                let mut output_name = "output".to_string();
-                if let Some(target) = &config.target_platform {
-                    let (goos, _) = target.goos_goarch();
-                    if goos == "windows" {
-                        output_name.push_str(".exe");
-                    }
-                } else if cfg!(target_os = "windows") {
-                    output_name.push_str(".exe");
-                }
-                cmd.arg("-o").arg(output_name);
-            }
-        }
-        ContentType::Library => {
-            cmd.arg("build").arg("-buildmode=c-shared");
-
-            // Set output name for library
-            if let Some(output_name) = &config.output_name {
-                cmd.arg("-o").arg(output_name);
-            } else {
-                let mut output_name = "lib".to_string();
-                if let Some(target) = &config.target_platform {
-                    let (goos, _) = target.goos_goarch();
-                    match goos {
-                        "windows" => output_name.push_str(".dll"),
-                        "darwin" => output_name.push_str(".dylib"),
-                        _ => output_name.push_str(".so"),
-                    }
-                } else {
-                    // Use current platform default
-                    if cfg!(target_os = "windows") {
-                        output_name.push_str(".dll");
-                    } else if cfg!(target_os = "macos") {
-                        output_name.push_str(".dylib");
-                    } else {
-                        output_name.push_str(".so");
-                    }
-                }
-                cmd.arg("-o").arg(output_name);
-            }
-        }
+    // Add buildmode if specified
+    if let Some(buildmode) = config.build_mode.go_buildmode() {
+        cmd.arg(format!("-buildmode={}", buildmode));
     }
+
+    // Add optimization flags
+    let opt_flags = config.optimization_level.go_flags();
+    for flag in opt_flags {
+        cmd.arg(flag);
+    }
+
+    // Set output path in build directory
+    let output_path = if let Some(output_name) = &config.output_name {
+        build_dir.join(output_name)
+    } else {
+        let default_name = &main_file.name;
+        build_dir.join(default_name)
+    };
+
+    cmd.arg("-o").arg(&output_path);
 
     // Add the main file
     cmd.arg(&main_file.name);
@@ -314,9 +321,12 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
         Ok(output) => {
             if output.status.success() {
                 println!("Compilation successful!");
+                println!("Output saved to: {}", output_path.display());
+
                 if !output.stdout.is_empty() {
                     println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
                 }
+                cleanup_generated_files(files);
             } else {
                 eprintln!("Compilation failed!");
                 if !output.stderr.is_empty() {
@@ -325,11 +335,13 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
                 if !output.stdout.is_empty() {
                     eprintln!("stdout: {}", String::from_utf8_lossy(&output.stdout));
                 }
+                cleanup_generated_files(files);
                 std::process::exit(1);
             }
         }
         Err(e) => {
             eprintln!("Failed to execute compiler: {}", e);
+            cleanup_generated_files(files);
             std::process::exit(1);
         }
     }
@@ -345,16 +357,16 @@ Options:
   --target <platform>      target platform (linux, windows, darwin,
                           linux-arm64, windows-arm64, darwin-arm64)
                           [default: current platform]
-  --type <type>           content type (exe, lib) [default: exe]
+  --mode <mode>           build mode (bin, lib) [default: bin]
   --opt <level>           optimization level (0=none, 1=basic, 2=full) [default: 1]
   --output <name>         output file name
 
 Examples:
   build                                    # compile current directory
   build src/                               # compile directory
-  build main.ya                           # compile single file
-  build file1.ya file2.ya                # compile multiple files
-  build --target windows --type exe        # cross-compile for Windows
+  build main.ya                            # compile single file
+  build file1.ya file2.ya                  # compile multiple files
+  build --target windows --mode bin        # compile executable for Windows
   build --target linux-arm64 --opt 2       # optimize for Linux ARM64
 "
     );
@@ -374,12 +386,12 @@ fn parse_args(args: &[String]) -> Result<(BuildConfig, Vec<String>), String> {
                 }
                 config.target_platform = Some(TargetPlatform::from_str(&args[i])?);
             }
-            "--type" => {
+            "--mode" => {
                 i += 1;
                 if i >= args.len() {
-                    return Err("--type requires a value".to_string());
+                    return Err("--mode requires a value".to_string());
                 }
-                config.content_type = ContentType::from_str(&args[i])?;
+                config.build_mode = BuildMode::from_str(&args[i])?;
             }
             "--opt" => {
                 i += 1;
@@ -395,7 +407,6 @@ fn parse_args(args: &[String]) -> Result<(BuildConfig, Vec<String>), String> {
                 }
                 config.output_name = Some(args[i].clone());
             }
-
             arg if arg.starts_with("--") => {
                 return Err(format!("Unknown option: {}", arg));
             }

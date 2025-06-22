@@ -842,7 +842,7 @@ impl Parser {
 
         let kind = match self.tok.kind {
             // for binding; condition { ... } - C-style for loop
-            TokenKind::Ident | TokenKind::LParen => {
+            TokenKind::LParen => {
                 let binding = self.parse_binding(&AnnotationMode::Optional);
                 self.expect(TokenKind::Semicolon);
                 let expr = self.parse_expr_no_struct();
