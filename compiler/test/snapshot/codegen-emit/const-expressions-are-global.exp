@@ -1,7 +1,7 @@
 Const expressions are global
 
 SOURCE:
-file: main.brg
+file: main.ya
 
 const a: int = 1
 

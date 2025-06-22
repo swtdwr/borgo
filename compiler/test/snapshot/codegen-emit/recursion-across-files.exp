@@ -1,7 +1,7 @@
 Recursion across files
 
 SOURCE:
-file: a.brg
+file: a.ya
 fn a(n: int) -> int {
     if n == 100 {
         return n
@@ -10,7 +10,7 @@ fn a(n: int) -> int {
     b(n + 10)
 }
 
-file: b.brg
+file: b.ya
 fn b(n: int) -> int {
     if n == 200 {
         return n
@@ -19,7 +19,7 @@ fn b(n: int) -> int {
     a(n + 20)
 }
 
-file: main.brg
+file: main.ya
 fn main() { assertEq(a(40), 100) }
 
 OUTPUT:

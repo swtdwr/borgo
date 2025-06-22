@@ -1,7 +1,7 @@
 Recursive functions are supported in files.
 
 SOURCE:
-file: main.brg
+file: main.ya
 
 fn foo(n: int) -> int {
     if n != 5 {

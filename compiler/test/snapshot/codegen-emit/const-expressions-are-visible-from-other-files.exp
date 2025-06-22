@@ -1,13 +1,13 @@
 Const expressions are visible from other files
 
 SOURCE:
-file: foo.brg
+file: foo.ya
 
 fn check() -> bool {
     foo == 2
 }
 
-file: main.brg
+file: main.ya
 
 const foo: int = 1 + 1
 fn main() { assertEq(check(), true) }

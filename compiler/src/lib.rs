@@ -7,6 +7,5 @@ pub mod global_state;
 pub mod infer;
 pub mod lexer;
 pub mod parser;
-pub mod prelude;
 pub mod substitute;
 pub mod type_;

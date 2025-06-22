@@ -321,7 +321,7 @@ function splitInFiles(input: string) {
   let files = input.split("file:");
   if (files.length == 1) {
     // No "file:" found
-    return [{ filename: "main.brg", contents: input }];
+    return [{ filename: "main.ya", contents: input }];
   }
 
   return files.filter(Boolean).map((f) => {
@@ -348,8 +348,8 @@ export async function initProject(folder: string, block: CodeBlock) {
     exit(err);
   }
 
-  // Delete main.brg otherwise it may conflict with other definitions
-  Deno.removeSync(folder + "/main.brg");
+  // Delete main.ya otherwise it may conflict with other definitions
+  Deno.removeSync(folder + "/main.ya");
 
   // Switch to the test folder
   Deno.chdir(folder);

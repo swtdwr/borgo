@@ -317,7 +317,7 @@ fn main() {
 Recursive functions are supported in files.
 
 ```rust
-file: main.brg
+file: main.ya
 
 fn foo(n: int) -> int {
     if n != 5 {
@@ -335,7 +335,7 @@ fn main() {
 Mutually recursive functions
 
 ```rust
-file: main.brg
+file: main.ya
 
 fn abs(n: int) -> int {
     if n < 0 { return -n }
@@ -366,12 +366,12 @@ fn main() {
 Multiple files
 
 ```rust
-file: foo.brg
+file: foo.ya
 enum Foo {
     X(Bar),
 }
 
-file: bar.brg
+file: bar.ya
 enum Bar {
     A(int),
 }
@@ -384,7 +384,7 @@ fn with_foo(f: Foo, m: int) -> int {
     }
 }
 
-file: main.brg
+file: main.ya
 fn main() {
     let bar = Bar.A(2)
     assertEq(with_foo(Foo.X(bar), 3), 5)
@@ -394,7 +394,7 @@ fn main() {
 Recursion across files
 
 ```rust
-file: a.brg
+file: a.ya
 fn a(n: int) -> int {
     if n == 100 {
         return n
@@ -403,7 +403,7 @@ fn a(n: int) -> int {
     b(n + 10)
 }
 
-file: b.brg
+file: b.ya
 fn b(n: int) -> int {
     if n == 200 {
         return n
@@ -412,7 +412,7 @@ fn b(n: int) -> int {
     a(n + 20)
 }
 
-file: main.brg
+file: main.ya
 fn main() { assertEq(a(40), 100) }
 ```
 
@@ -436,7 +436,7 @@ fn main() {
 Const expressions are global
 
 ```rust
-file: main.brg
+file: main.ya
 
 const a: int = 1
 
@@ -446,13 +446,13 @@ fn main() { assertEq(a + 5, 6) }
 Const expressions are visible from other files
 
 ```rust
-file: foo.brg
+file: foo.ya
 
 fn check() -> bool {
     foo == 2
 }
 
-file: main.brg
+file: main.ya
 
 const foo: int = 1 + 1
 fn main() { assertEq(check(), true) }

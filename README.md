@@ -167,7 +167,7 @@ fn main() {
 
 Borgo is written in Rust, so you'll need `cargo`.
 
-To compile all `.brg` files in the current folder:
+To compile all `.ya` files in the current folder:
 
 ```bash
 $ cargo run -- build

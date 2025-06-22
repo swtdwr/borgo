@@ -1,0 +1,20 @@
+import std.io
+
+
+trait Hash {
+extend io.Writer
+  fn Sum (b: [byte]) : [byte]
+  fn Reset () : ()
+  fn Size () : int
+  fn BlockSize () : int
+}
+
+trait Hash32 {
+extend Hash
+  fn Sum32 () : uint32
+}
+
+trait Hash64 {
+extend Hash
+  fn Sum64 () : uint64
+}

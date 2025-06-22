@@ -1,0 +1,203 @@
+fn Copy  (dst: Writer, src: Reader) : Result<int64> { EXT }
+
+fn CopyBuffer  (dst: Writer, src: Reader, buf: [byte]) : Result<int64> { EXT }
+
+fn CopyN  (dst: Writer, src: Reader, n: int64) : Result<int64> { EXT }
+
+fn LimitReader  (r: Reader, n: int64) : Reader { EXT }
+
+fn MultiReader  (readers: VarArgs<Reader>) : Reader { EXT }
+
+fn MultiWriter  (writers: VarArgs<Writer>) : Writer { EXT }
+
+fn NewSectionReader  (r: ReaderAt, off: int64, n: int64) : *SectionReader { EXT }
+
+fn NopCloser  (r: Reader) : ReadCloser { EXT }
+
+fn Pipe  () : (*PipeReader, *PipeWriter) { EXT }
+
+fn ReadAll  (r: Reader) : Result<[byte]> { EXT }
+
+fn ReadAtLeast  (r: Reader, buf: [byte], min: int) : Result<int> { EXT }
+
+fn ReadFull  (r: Reader, buf: [byte]) : Result<int> { EXT }
+
+fn TeeReader  (r: Reader, w: Writer) : Reader { EXT }
+
+fn WriteString  (w: Writer, s: string) : Result<int> { EXT }
+
+extend (self: LimitedReader) {
+
+fn Read  (p: [byte]) : Result<int> { EXT }
+
+}
+
+extend (self: PipeReader) {
+
+fn Close  () : error { EXT }
+
+fn CloseWithError  (err: error) : error { EXT }
+
+fn Read  (data: [byte]) : Result<int> { EXT }
+
+}
+
+extend (self: PipeWriter) {
+
+fn Close  () : error { EXT }
+
+fn CloseWithError  (err: error) : error { EXT }
+
+fn Write  (data: [byte]) : Result<int> { EXT }
+
+}
+
+extend (self: SectionReader) {
+
+fn Read  (p: [byte]) : Result<int> { EXT }
+
+fn ReadAt  (p: [byte], off: int64) : Result<int> { EXT }
+
+fn Seek  (offset: int64, whence: int) : Result<int64> { EXT }
+
+fn Size  () : int64 { EXT }
+
+}
+
+trait ByteReader {
+
+  fn ReadByte () : Result<byte>
+}
+
+trait ByteScanner {
+extend ByteReader
+  fn UnreadByte () : error
+}
+
+trait ByteWriter {
+
+  fn WriteByte (c: byte) : error
+}
+
+trait Closer {
+
+  fn Close () : error
+}
+
+struct LimitedReader{
+  R: Reader,
+  N: int64
+}
+
+struct PipeReader{
+
+}
+
+struct PipeWriter{
+
+}
+
+trait ReadCloser {
+extend Reader
+extend Closer
+
+}
+
+trait ReadSeekCloser {
+extend Reader
+extend Seeker
+extend Closer
+
+}
+
+trait ReadSeeker {
+extend Reader
+extend Seeker
+
+}
+
+trait ReadWriteCloser {
+extend Reader
+extend Writer
+extend Closer
+
+}
+
+trait ReadWriteSeeker {
+extend Reader
+extend Writer
+extend Seeker
+
+}
+
+trait ReadWriter {
+extend Reader
+extend Writer
+
+}
+
+trait Reader {
+
+  fn Read (p: [byte]) : Result<int>
+}
+
+trait ReaderAt {
+
+  fn ReadAt (p: [byte], off: int64) : Result<int>
+}
+
+trait ReaderFrom {
+
+  fn ReadFrom (r: Reader) : Result<int64>
+}
+
+trait RuneReader {
+
+  fn ReadRune () : (rune, int, error)
+}
+
+trait RuneScanner {
+extend RuneReader
+  fn UnreadRune () : error
+}
+
+struct SectionReader{
+
+}
+
+trait Seeker {
+
+  fn Seek (offset: int64, whence: int) : Result<int64>
+}
+
+trait StringWriter {
+
+  fn WriteString (s: string) : Result<int>
+}
+
+trait WriteCloser {
+extend Writer
+extend Closer
+
+}
+
+trait WriteSeeker {
+extend Writer
+extend Seeker
+
+}
+
+trait Writer {
+
+  fn Write (p: [byte]) : Result<int>
+}
+
+trait WriterAt {
+
+  fn WriteAt (p: [byte], off: int64) : Result<int>
+}
+
+trait WriterTo {
+
+  fn WriteTo (w: Writer) : Result<int64>
+}

@@ -2,7 +2,7 @@ use crate::{
     ast::{
         Arm, Binding, Constructor, EnumDefinition, EnumFieldDef, Expr, FileId, Function,
         FunctionKind, Generic, InterfaceSuperTrait, LineColumn, Literal, Loop, LoopFlow,
-        NewtypeDefinition, Operator, Pat, PkgImport, SelectArm, SelectArmPat, Span, StrType,
+        NewtypeDefinition, Operator, Pat, PkgImport, Span, StrType,
         StructDefinition, StructField, StructFieldDef, StructFieldPat, TypeAliasDef, TypeAst, UnOp,
     },
     lexer::{Lexer, Pos, Token, TokenKind, TokenKind::EOF},
@@ -775,12 +775,9 @@ impl Parser {
             TokenKind::Struct => self.item_struct(),
             TokenKind::Interface => self.item_interface(),
             TokenKind::Return => self.stmt_return(),
-            TokenKind::Defer => self.stmt_defer(),
-            TokenKind::Spawn => self.stmt_spawn(),
             TokenKind::Fn_ => self.expr_fn(FunctionKind::Inline),
-            TokenKind::For | TokenKind::While | TokenKind::Loop => self.stmt_loop(),
+            TokenKind::For => self.stmt_loop(),
             TokenKind::Break | TokenKind::Continue => self.stmt_loop_flow(),
-            TokenKind::Select => self.stmt_select(),
             TokenKind::Support => self.stmt_support(),
             _ => self.stmt_assign(),
         };
@@ -837,47 +834,17 @@ impl Parser {
         }
     }
 
-    fn stmt_defer(&mut self) -> Expr {
-        assert!(self.tok.kind == TokenKind::Defer);
-
-        // consume 'defer'
-        let start = self.next();
-
-        let expr = self.parse_expr();
-
-        Expr::Defer {
-            expr: expr.into(),
-            ty: Type::dummy(),
-            span: self.make_span(start),
-        }
-    }
-
-    fn stmt_spawn(&mut self) -> Expr {
-        assert!(self.tok.kind == TokenKind::Spawn);
-
-        // consume 'spawn'
-        let start = self.next();
-
-        let expr = self.parse_expr();
-
-        Expr::Spawn {
-            expr: expr.into(),
-            ty: Type::dummy(),
-            span: self.make_span(start),
-        }
-    }
-
     fn stmt_loop(&mut self) -> Expr {
         let start = self.start();
 
+        // Expect 'for' keyword for all loop types
+        self.expect(TokenKind::For);
+
         let kind = match self.tok.kind {
-            TokenKind::For => {
-                // consume 'for'
-                self.next();
-
+            // for binding; condition { ... } - C-style for loop
+            TokenKind::Ident | TokenKind::LParen => {
                 let binding = self.parse_binding(&AnnotationMode::Optional);
-
-                self.expect(TokenKind::In_);
+                self.expect(TokenKind::Semicolon);
                 let expr = self.parse_expr_no_struct();
 
                 Loop::WithCondition {
@@ -886,22 +853,10 @@ impl Parser {
                 }
             }
 
-            TokenKind::While => {
-                // consume 'while'
-                self.next();
-
+            _ => {
                 let expr = self.parse_expr_no_struct();
                 Loop::While { expr: expr.into() }
             }
-
-            TokenKind::Loop => {
-                // consume 'loop'
-                self.next();
-
-                Loop::NoCondition
-            }
-
-            _ => unreachable!(),
         };
 
         let body = self.expr_block();
@@ -979,57 +934,6 @@ impl Parser {
         };
 
         Expr::Raw { text }
-    }
-
-    fn stmt_select(&mut self) -> Expr {
-        assert!(self.tok.kind == TokenKind::Select);
-
-        // consume 'select'
-        let start = self.next();
-
-        let mut arms = vec![];
-
-        self.expect(TokenKind::LCurly);
-
-        while self.is_not(TokenKind::RCurly) {
-            let pat = match self.tok.kind {
-                TokenKind::Let => {
-                    //  'let' x = ch.Recv()
-                    let stmt = self.stmt_let();
-
-                    match stmt {
-                        Expr::Let { binding, value, .. } => SelectArmPat::Recv(binding, *value),
-                        _ => unreachable!(),
-                    }
-                }
-
-                TokenKind::Ident if self.tok.text == "_" => {
-                    //  Wildcard
-                    self.next();
-                    SelectArmPat::Wildcard
-                }
-
-                _ => {
-                    //  ch.Send()
-                    let expr = self.parse_expr_no_struct();
-                    SelectArmPat::Send(expr)
-                }
-            };
-
-            self.expect(TokenKind::FatArrow);
-
-            let expr = self.parse_expr();
-            arms.push(SelectArm { pat, expr });
-
-            self.expect_semi_lenient();
-        }
-
-        self.expect(TokenKind::RCurly);
-
-        Expr::Select {
-            arms,
-            span: self.make_span(start),
-        }
     }
 
     fn expr_debug(&mut self) -> Expr {
@@ -1591,7 +1495,7 @@ impl Parser {
     }
 
     fn parse_ret_type(&mut self, kind: FunctionKind) -> TypeAst {
-        if self.tok.kind == TokenKind::Arrow {
+        if self.tok.kind == TokenKind::Colon {
             // consume '->'
             self.next();
             return self.parse_type();

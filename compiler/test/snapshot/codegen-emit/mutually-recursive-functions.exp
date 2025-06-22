@@ -1,7 +1,7 @@
 Mutually recursive functions
 
 SOURCE:
-file: main.brg
+file: main.ya
 
 fn abs(n: int) -> int {
     if n < 0 { return -n }

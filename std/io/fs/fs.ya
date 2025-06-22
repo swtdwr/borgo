@@ -1,0 +1,112 @@
+import std.time
+
+
+fn FileInfoToDirEntry  (info: FileInfo) : DirEntry { EXT }
+
+fn Glob  (fsys: FS, pattern: string) : Result<[string]> { EXT }
+
+fn ReadDir  (fsys: FS, name: string) : Result<[DirEntry]> { EXT }
+
+fn ReadFile  (fsys: FS, name: string) : Result<[byte]> { EXT }
+
+fn Stat  (fsys: FS, name: string) : Result<FileInfo> { EXT }
+
+fn Sub  (fsys: FS, dir: string) : Result<FS> { EXT }
+
+fn ValidPath  (name: string) : bool { EXT }
+
+fn WalkDir  (fsys: FS, root: string, fn_: WalkDirFunc) : error { EXT }
+
+extend (self: FileMode) {
+
+fn IsDir  () : bool { EXT }
+
+fn IsRegular  () : bool { EXT }
+
+fn Perm  () : FileMode { EXT }
+
+fn String  () : string { EXT }
+
+fn Type  () : FileMode { EXT }
+
+}
+
+extend (self: PathError) {
+
+fn Error  () : string { EXT }
+
+fn Timeout  () : bool { EXT }
+
+fn Unwrap  () : error { EXT }
+
+}
+
+type WalkDirFunc = fn (path: string, d: DirEntry, err: error) : error
+
+struct FileMode(uint32)
+
+trait DirEntry {
+
+  fn Name () : string
+  fn IsDir () : bool
+  fn Type () : FileMode
+  fn Info () : Result<FileInfo>
+}
+
+trait FS {
+
+  fn Open (name: string) : Result<File>
+}
+
+trait File {
+
+  fn Stat () : Result<FileInfo>
+  fn Read (param0: [byte]) : Result<int>
+  fn Close () : error
+}
+
+trait FileInfo {
+
+  fn Name () : string
+  fn Size () : int64
+  fn Mode () : FileMode
+  fn ModTime () : time.Time
+  fn IsDir () : bool
+  fn Sys () : any
+}
+
+trait GlobFS {
+extend FS
+  fn Glob (pattern: string) : Result<[string]>
+}
+
+struct PathError{
+  Op: string,
+  Path: string,
+  Err: error
+}
+
+trait ReadDirFS {
+extend FS
+  fn ReadDir (name: string) : Result<[DirEntry]>
+}
+
+trait ReadDirFile {
+extend File
+  fn ReadDir (n: int) : Result<[DirEntry]>
+}
+
+trait ReadFileFS {
+extend FS
+  fn ReadFile (name: string) : Result<[byte]>
+}
+
+trait StatFS {
+extend FS
+  fn Stat (name: string) : Result<FileInfo>
+}
+
+trait SubFS {
+extend FS
+  fn Sub (dir: string) : Result<FS>
+}

@@ -47,7 +47,7 @@ impl FileSystem for LocalFS {
                 .unwrap()
                 .to_string();
 
-            if path.ends_with(".brg") {
+            if path.ends_with(".ya") {
                 let source = std::fs::read_to_string(&path).unwrap();
                 let name = std::path::Path::new(&path)
                     .file_name()
@@ -77,26 +77,6 @@ fn find_std_path(base: &str) -> PathBuf {
         .parent()
         .unwrap()
         .join("std")
-}
-
-// Used by wasm lib, reads from sources passed in from js as json
-pub struct WasmFS {
-    packages: HashMap<String, HashMap<String, String>>,
-}
-
-impl WasmFS {
-    pub fn new(packages: HashMap<String, HashMap<String, String>>) -> Self {
-        Self { packages }
-    }
-}
-
-impl FileSystem for WasmFS {
-    fn scan_folder(&mut self, folder: &str) -> HashMap<String, String> {
-        self.packages
-            .get(folder)
-            .expect("Module should exist")
-            .clone()
-    }
 }
 
 // Used by tests, doesn't return any files

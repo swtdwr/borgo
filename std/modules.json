@@ -5,130 +5,126 @@
   },
   {
     "path": "errors",
-    "name": "errors"
+    "name": "std.errors"
   },
   {
     "path": "context",
-    "name": "context"
+    "name": "std.context"
   },
   {
     "path": "time",
-    "name": "time"
+    "name": "std.time"
   },
   {
     "path": "syscall",
-    "name": "syscall"
+    "name": "std.syscall"
   },
   {
     "path": "unicode",
-    "name": "unicode"
+    "name": "std,unicode"
   },
   {
     "path": "strconv",
-    "name": "strconv"
+    "name": "std.strconv"
   },
   {
     "path": "io",
-    "name": "io"
+    "name": "std.io"
   },
   {
     "path": "strings",
-    "name": "strings"
+    "name": "std.strings"
   },
   {
     "path": "bytes",
-    "name": "bytes"
+    "name": "std.bytes"
   },
   {
     "path": "regexp",
-    "name": "regexp"
+    "name": "std.regexp"
   },
   {
     "path": "io/fs",
-    "name": "io.fs"
+    "name": "std.io.fs"
   },
   {
     "path": "fmt",
-    "name": "fmt"
+    "name": "std.fmt"
   },
   {
     "path": "unsafe",
-    "name": "unsafe"
+    "name": "std.unsafe"
   },
   {
     "path": "reflect",
-    "name": "reflect"
+    "name": "std.reflect"
   },
   {
     "path": "log",
-    "name": "log"
+    "name": "std.log"
   },
   {
     "path": "math",
-    "name": "math"
+    "name": "std.math"
   },
   {
     "path": "math/rand",
-    "name": "math.rand"
+    "name": "std.math.rand"
   },
   {
     "path": "os",
-    "name": "os"
+    "name": "std.os"
   },
   {
     "path": "sync",
-    "name": "sync"
+    "name": "std.sync"
   },
   {
     "path": "bufio",
-    "name": "bufio"
-  },
-  {
-    "path": "testing",
-    "name": "testing"
+    "name": "std.bufio"
   },
   {
     "path": "hash",
-    "name": "hash"
+    "name": "std.hash"
   },
   {
     "path": "crypto",
-    "name": "crypto"
+    "name": "std.crypto"
   },
   {
     "path": "crypto/x509",
-    "name": "crypto.x509"
+    "name": "std.crypto.x509"
   },
   {
     "path": "crypto/tls",
-    "name": "crypto.tls"
+    "name": "std.crypto.tls"
   },
   {
     "path": "net",
-    "name": "net"
+    "name": "std.net"
   },
   {
     "path": "net/netip",
-    "name": "net.netip"
+    "name": "std.net.netip"
   },
   {
     "path": "net/textproto",
-    "name": "net.textproto"
+    "name": "std.net.textproto"
   },
   {
     "path": "net/url",
-    "name": "net.url"
+    "name": "std.net.url"
   },
   {
     "path": "mime/multipart",
-    "name": "mime.multipart"
+    "name": "std.mime.multipart"
   },
   {
     "path": "net/http",
-    "name": "net.http"
+    "name": "std.net.http"
   },
   {
     "path": "net/http/httptest",
-    "name": "net.http.httptest"
+    "name": "std.net.http.httptest"
   }
 ]
