@@ -234,11 +234,7 @@ fn emit_files(files: &[EmittedFile]) {
 fn cleanup_generated_files(files: &[EmittedFile]) {
     for file in files {
         if file.name.ends_with(".go") {
-            if let Err(e) = std::fs::remove_file(&file.name) {
-                eprintln!("Warning: Failed to remove generated file {}: {}", file.name, e);
-            } else {
-                println!("Cleaned up: {}", file.name);
-            }
+            std::fs::remove_file(&file.name).unwrap()
         }
     }
 }
@@ -305,6 +301,8 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
         cmd.arg(flag);
     }
 
+    cmd.arg("--trimpath");
+
     // Set output path in build directory
     let output_path = if let Some(output_name) = &config.output_name {
         build_dir.join(output_name)
@@ -326,11 +324,6 @@ fn compile_generated_code(files: &[EmittedFile], config: &BuildConfig, working_d
         Ok(output) => {
             if output.status.success() {
                 println!("Compilation successful!");
-                println!("Output saved to: {}", output_path.display());
-
-                if !output.stdout.is_empty() {
-                    println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-                }
                 cleanup_generated_files(files);
             } else {
                 eprintln!("Compilation failed!");
